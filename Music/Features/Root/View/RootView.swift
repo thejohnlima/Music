@@ -13,22 +13,9 @@ struct RootView: View {
     // MARK: - Properties
     @State private var isActive = false
 
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([Item.self])
-
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-
     var body: some View {
         if isActive {
             SearchView()
-                .modelContainer(sharedModelContainer)
         } else {
             SplashScreenView()
                 .onAppear {
