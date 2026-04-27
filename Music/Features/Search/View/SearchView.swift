@@ -15,9 +15,9 @@ struct SearchView: View {
     @StateObject private var coordinator = SearchCoordinator()
     @StateObject var viewModel = SearchViewModel()
 
-    var body: some View {
+    var body: some View { 
         NavigationStack(path: $coordinator.path) {
-            List(viewModel.items) { item in
+            List(viewModel.items, id: \.id) { item in
                 HStack {
                     let imageSize = 56.0
 
@@ -58,11 +58,13 @@ struct SearchView: View {
                 placement: .navigationBarDrawer
             )
             .onSubmit(of: .search) {
-                viewModel.runSearch = viewModel.searchText
+                Task {
+                    await viewModel.search(text: viewModel.searchText)
+                }
                 dismissSearch()
             }
             .navigationDestination(for: SearchItem.self) { item in
-                PlayerView()
+                PlayerView(viewModel: .init(item: item.toMedia))
             }
         }
         .task {

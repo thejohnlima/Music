@@ -6,38 +6,32 @@
 //
 
 import Foundation
-import SwiftData
 
-@Model
-final class SearchItem: Codable, Identifiable {
+struct SearchItem: Codable, Identifiable, Hashable {
     var id = UUID()
+    var trackId: Int?
     var artistName: String?
     var trackName: String?
+    var albumTitle: String?
     var artworkURL: String?
+    var previewURL: String?
 
-    init(artistName: String, trackName: String, artworkURL: String) {
-        self.artistName = artistName
-        self.trackName = trackName
-        self.artworkURL = artworkURL
+    var toMedia: Media {
+        Media(
+            trackID: trackId,
+            albumTitle: albumTitle,
+            image: getImageURL(size: 1024)?.absoluteString,
+            artistName: artistName,
+            trackName: trackName,
+            previewURL: previewURL
+        )
     }
 
     enum CodingKeys: String, CodingKey {
-        case artistName, trackName
+        case trackId, artistName, trackName
+        case albumTitle = "collectionName"
         case artworkURL = "artworkUrl100"
-    }
-
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        artistName = try container.decode(String.self, forKey: .artistName)
-        trackName = try container.decode(String.self, forKey: .trackName)
-        artworkURL = try container.decode(String.self, forKey: .artworkURL)
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(artistName, forKey: .artistName)
-        try container.encode(trackName, forKey: .trackName)
-        try container.encode(artworkURL, forKey: .artworkURL)
+        case previewURL = "previewUrl"
     }
 
     func getImageURL(size: Int = 512) -> URL? {

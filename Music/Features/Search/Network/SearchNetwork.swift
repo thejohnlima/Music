@@ -20,6 +20,8 @@ class SearchNetwork {
         guard let (data, _) = try? await URLSession.shared.data(for: request),
               let response = try? JSONDecoder().decode(SearchResponse.self, from: data) else { return [] }
 
-        return response.results ?? []
+        let results = response.results ?? []
+
+        return results
     }
 }

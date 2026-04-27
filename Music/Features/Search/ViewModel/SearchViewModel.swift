@@ -13,7 +13,6 @@ final class SearchViewModel: ObservableObject {
     // MARK: - Properties
     @Published var items: [SearchItem] = []
     @Published var searchText = ""
-    @Published var runSearch = ""
     @Published var showKeyboard = false
 
     private let network: SearchNetwork
