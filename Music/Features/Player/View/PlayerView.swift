@@ -11,6 +11,7 @@ import SwiftUI
 struct PlayerView: View {
 
     // MARK: - Properties
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: PlayerViewModel
 
     var body: some View {
@@ -23,18 +24,30 @@ struct PlayerView: View {
                     infoControlsView()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                .navigationTitle(viewModel.item.albumTitle ?? "")
+                .navigationTitle(viewModel.currentMedia?.albumTitle ?? "")
                 .toolbarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem {
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button {
 
                         } label: {
                             Label("Play", systemImage: "ellipsis")
                         }
                     }
+
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Label("Play", systemImage: "chevron.backward")
+                        }
+                    }
                 }
             }
+        }
+        .onAppear {
+            guard let media = viewModel.currentMedia else { return }
+            viewModel.load(media)
         }
     }
 
@@ -42,7 +55,7 @@ struct PlayerView: View {
     private func imageView(geometry: GeometryProxy) -> some View {
         let imageSize = geometry.size.width * 0.7
 
-        return KFImage(URL(string: viewModel.item.image ?? ""))
+        return KFImage(URL(string: viewModel.currentMedia?.image ?? ""))
             .resizable()
             .placeholder { _ in
                 Rectangle()
@@ -57,11 +70,11 @@ struct PlayerView: View {
         VStack(alignment: .leading) {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(viewModel.item.artistName ?? "")
+                    Text(viewModel.currentMedia?.artistName ?? "")
                         .font(.largeTitle)
                         .fontWeight(.bold)
 
-                    Text(viewModel.item.trackName ?? "")
+                    Text(viewModel.currentMedia?.trackName ?? "")
                         .font(.default)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary.opacity(0.7))
@@ -85,7 +98,7 @@ struct PlayerView: View {
 
             HStack(spacing: 24) {
                 Button {
-
+                    viewModel.seek(to: -5)
                 } label: {
                     Image(systemName: "backward.end.alt.fill")
                         .resizable()
@@ -105,7 +118,7 @@ struct PlayerView: View {
                 }
 
                 Button {
-
+                    viewModel.seek(to: 5)
                 } label: {
                     Image(systemName: "forward.end.alt.fill")
                         .resizable()

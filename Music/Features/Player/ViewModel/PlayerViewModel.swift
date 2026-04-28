@@ -5,15 +5,23 @@
 //  Created by John Lima on 4/26/26.
 //
 
+import AVFoundation
 import Combine
 import Foundation
 
 final class PlayerViewModel: ObservableObject {
 
     // MARK: - Properties
-    @Published var item: Media
+    @Published var currentMedia: Media?
+    @Published var currentTime: TimeInterval = 0
+    @Published var totalDuration: TimeInterval = 0
+    @Published var isPlaying = false
+    @Published var isSeeking = false
+    @Published var dragProgress: Double = 0
 
-    let playerService: AudioPlayerService
+    private var player: AVPlayer?
+    private var timeObserverToken: Any?
+    private var endObserver: Any?
 
     static var mock: PlayerViewModel {
         let media = Media(
@@ -23,54 +31,105 @@ final class PlayerViewModel: ObservableObject {
             trackName: "Set Fire to the Rain"
         )
 
-        return PlayerViewModel(item: media, playerService: AudioPlayerService())
+        return PlayerViewModel(item: media)
     }
 
     var progress: Double {
-        guard playerService.totalDuration > 0 else { return 0 }
-        return playerService.currentTime / playerService.totalDuration
+        guard totalDuration > 0 else { return 0 }
+        return currentTime / totalDuration
     }
 
     var displayCurrentTime: TimeInterval {
-        playerService.isSeeking ? playerService.dragProgress * playerService.totalDuration : playerService.currentTime
+        isSeeking ? dragProgress * totalDuration : currentTime
     }
 
     var displayRemainingTime: TimeInterval {
-        max(playerService.totalDuration - displayCurrentTime, 0)
-    }
-
-    var isPlaying: Bool {
-        playerService.isPlaying
-    }
-
-    var isSeeking: Bool {
-        playerService.isSeeking
-    }
-
-    var dragProgress: Double {
-        playerService.dragProgress
+        max(totalDuration - displayCurrentTime, 0)
     }
 
     // MARK: - Initializers
-    init(item: Media, playerService: AudioPlayerService = .shared) {
-        self.item = item
-        self.playerService = playerService
-        self.playerService.load(item)
+    init(item: Media) {
+        self.currentMedia = item
+    }
+
+    deinit {
+        removeObservers()
     }
 
     // MARK: - Public Methods
-    func updateDragProgress(_ value: Double) {
-        playerService.isSeeking = true
-        playerService.dragProgress = value
-    }
+    func load(_ media: Media) {
+        currentMedia = media
+        currentTime = 0
+        dragProgress = 0
+        isPlaying = false
+        isSeeking = false
 
-    func endSeeking() {
-        playerService.seek(to: playerService.dragProgress)
-        playerService.isSeeking = false
+        removeObservers()
+
+        guard let previewURLString = media.previewURL, let url = URL(string: previewURLString) else { return }
+
+        let playerItem = AVPlayerItem(url: url)
+
+        player = AVPlayer(playerItem: playerItem)
+
+        Task {
+            do {
+                let duration = try await playerItem.asset.load(.duration)
+                let actualDuration = duration.seconds
+
+                if actualDuration.isFinite && actualDuration > 0 {
+                    await MainActor.run {
+                        self.totalDuration = actualDuration
+                        self.togglePlayback()
+                    }
+                }
+            } catch {
+                print("❌ Failed to load asset duration: \(error)")
+            }
+        }
+
+        addPeriodicTimeObserver()
+        addPlaybackEndObserver()
     }
 
     func togglePlayback() {
-        playerService.togglePlayback()
+        guard let player else { return }
+
+        if isPlaying {
+            player.pause()
+        } else {
+            if currentTime >= totalDuration, totalDuration > 0 {
+                player.seek(to: .zero)
+                currentTime = 0
+                dragProgress = 0
+            }
+
+            player.play()
+        }
+
+        isPlaying.toggle()
+    }
+
+    func seek(to progress: Double) {
+        guard totalDuration > 0 else { return }
+
+        let newTime = progress * totalDuration
+        let cmTime = CMTime(seconds: newTime, preferredTimescale: 600)
+
+        player?.seek(to: cmTime)
+
+        currentTime = newTime
+        dragProgress = progress
+    }
+
+    func updateDragProgress(_ value: Double) {
+        isSeeking = true
+        dragProgress = value
+    }
+
+    func endSeeking() {
+        seek(to: dragProgress)
+        isSeeking = false
     }
 
     func formatTime(_ time: TimeInterval) -> String {
@@ -79,5 +138,51 @@ final class PlayerViewModel: ObservableObject {
         let seconds = totalSeconds % 60
 
         return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    // MARK: - Private Methods
+    private func addPeriodicTimeObserver() {
+        guard let player else { return }
+
+        let interval = CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
+
+        timeObserverToken = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
+            guard let self, !self.isSeeking else { return }
+
+            self.currentTime = time.seconds
+
+            if self.totalDuration > 0 {
+                self.dragProgress = self.currentTime / self.totalDuration
+            }
+        }
+    }
+
+    private func addPlaybackEndObserver() {
+        endObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player?.currentItem,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+
+            self.isPlaying = false
+            self.currentTime = 0
+            self.dragProgress = 0
+            self.player?.seek(to: .zero)
+            self.player?.play()
+            isPlaying = true
+        }
+    }
+
+    private func removeObservers() {
+        if let timeObserverToken {
+            player?.removeTimeObserver(timeObserverToken)
+            self.timeObserverToken = nil
+        }
+
+        if let endObserver {
+            NotificationCenter.default.removeObserver(endObserver)
+            self.endObserver = nil
+        }
     }
 }

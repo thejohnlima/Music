@@ -14,10 +14,9 @@ final class SearchViewModel: ObservableObject {
     @Published var items: [SearchItem] = []
     @Published var searchText = ""
     @Published var showKeyboard = false
+    @Published var selectedItem: SearchItem?
 
     private let network: SearchNetwork
-
-    var selectedItem: SearchItem?
 
     static var mock: Self {
         let viewModel = Self(network: SearchNetworkMock())

@@ -20,7 +20,7 @@ struct SearchItem: Codable, Identifiable, Hashable {
         Media(
             trackID: trackId,
             albumTitle: albumTitle,
-            image: getImageURL(size: 1024)?.absoluteString,
+            image: getImageURL()?.absoluteString,
             artistName: artistName,
             trackName: trackName,
             previewURL: previewURL

@@ -16,7 +16,7 @@ struct SearchView: View {
     @StateObject var viewModel = SearchViewModel()
 
     var body: some View { 
-        NavigationStack(path: $coordinator.path) {
+        NavigationStack {
             List(viewModel.items, id: \.id) { item in
                 HStack {
                     let imageSize = 56.0
@@ -45,7 +45,7 @@ struct SearchView: View {
                 )
                 .listRowSeparator(.hidden)
                 .onTapGesture {
-                    coordinator.pushPlayer(item)
+                    viewModel.selectedItem = item
                 }
             }
             .listStyle(.plain)
@@ -63,12 +63,12 @@ struct SearchView: View {
                 }
                 dismissSearch()
             }
-            .navigationDestination(for: SearchItem.self) { item in
+            .fullScreenCover(item: $viewModel.selectedItem) { item in
                 PlayerView(viewModel: .init(item: item.toMedia))
             }
         }
         .task {
-            await viewModel.search(text: "love")
+            await viewModel.search(text: "rain")
         }
     }
 
