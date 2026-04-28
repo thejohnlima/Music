@@ -56,3 +56,9 @@ struct SearchItem: Codable, Identifiable, Hashable {
         return URL(string: newString)
     }
 }
+
+extension Array where Element == SearchItem {
+    var mediaList: [Media] {
+        map(\.toMedia)
+    }
+}

@@ -64,11 +64,13 @@ struct SearchView: View {
                 dismissSearch()
             }
             .fullScreenCover(item: $viewModel.selectedItem) { item in
-                PlayerView(viewModel: .init(item: item.toMedia))
+                PlayerView(
+                    viewModel: .init(selected: item.toMedia, list: viewModel.items.mediaList)
+                )
             }
         }
         .task {
-            await viewModel.search(text: "rain")
+            await viewModel.search(text: "piseiro")
         }
     }
 

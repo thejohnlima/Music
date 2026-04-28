@@ -17,11 +17,14 @@ final class PlayerViewModel: ObservableObject {
     @Published var totalDuration: TimeInterval = 0
     @Published var isPlaying = false
     @Published var isSeeking = false
+    @Published var repeatEnabled = true
     @Published var dragProgress: Double = 0
 
     private var player: AVPlayer?
     private var timeObserverToken: Any?
     private var endObserver: Any?
+
+    var mediaList: [Media]
 
     static var mock: PlayerViewModel {
         let media = Media(
@@ -31,7 +34,7 @@ final class PlayerViewModel: ObservableObject {
             trackName: "Set Fire to the Rain"
         )
 
-        return PlayerViewModel(item: media)
+        return PlayerViewModel(selected: media, list: [media])
     }
 
     var progress: Double {
@@ -47,9 +50,26 @@ final class PlayerViewModel: ObservableObject {
         max(totalDuration - displayCurrentTime, 0)
     }
 
+    private var nextIndex: Int {
+        guard let currentMedia, let index = mediaList.firstIndex(where: { $0.trackID == currentMedia.trackID }) else { return 0 }
+
+        let next = mediaList.index(after: index)
+
+        return next < mediaList.endIndex ? next : mediaList.startIndex
+    }
+
+    private var previousIndex: Int {
+        guard let currentMedia, let index = mediaList.firstIndex(where: { $0.trackID == currentMedia.trackID }) else { return 0 }
+
+        let previous = mediaList.index(before: index)
+        
+        return previous >= mediaList.startIndex ? previous : mediaList.index(before: mediaList.endIndex)
+    }
+
     // MARK: - Initializers
-    init(item: Media) {
-        self.currentMedia = item
+    init(selected: Media, list: [Media]) {
+        currentMedia = selected
+        mediaList = list
     }
 
     deinit {
@@ -132,6 +152,18 @@ final class PlayerViewModel: ObservableObject {
         isSeeking = false
     }
 
+    func next() {
+        let media = mediaList[nextIndex]
+
+        play(item: media)
+    }
+
+    func previous() {
+        let media = mediaList[previousIndex]
+
+        play(item: media)
+    }
+
     func formatTime(_ time: TimeInterval) -> String {
         let totalSeconds = Int(time)
         let minutes = totalSeconds / 60
@@ -169,8 +201,10 @@ final class PlayerViewModel: ObservableObject {
             self.currentTime = 0
             self.dragProgress = 0
             self.player?.seek(to: .zero)
-            self.player?.play()
-            isPlaying = true
+
+            if repeatEnabled {
+                self.next()
+            }
         }
     }
 
@@ -184,5 +218,10 @@ final class PlayerViewModel: ObservableObject {
             NotificationCenter.default.removeObserver(endObserver)
             self.endObserver = nil
         }
+    }
+
+    private func play(item: Media) {
+        load(item)
+        player?.play()
     }
 }

@@ -31,15 +31,13 @@ struct PlayerView: View {
                         Button {
 
                         } label: {
-                            Label("Play", systemImage: "ellipsis")
+                            Label("More", systemImage: "ellipsis")
                         }
                     }
 
                     ToolbarItem(placement: .topBarLeading) {
-                        Button {
+                        Button(role: .close) {
                             dismiss()
-                        } label: {
-                            Label("Play", systemImage: "chevron.backward")
                         }
                     }
                 }
@@ -70,11 +68,11 @@ struct PlayerView: View {
         VStack(alignment: .leading) {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(viewModel.currentMedia?.artistName ?? "")
+                    Text(viewModel.currentMedia?.trackName ?? "")
                         .font(.largeTitle)
                         .fontWeight(.bold)
 
-                    Text(viewModel.currentMedia?.trackName ?? "")
+                    Text(viewModel.currentMedia?.artistName ?? "")
                         .font(.default)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary.opacity(0.7))
@@ -84,21 +82,21 @@ struct PlayerView: View {
                 Spacer()
 
                 Button {
-
+                    viewModel.repeatEnabled.toggle()
                 } label: {
                     Image(systemName: "repeat")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                 }
                 .frame(width: 24, height: 24)
-                .foregroundStyle(.primary)
+                .foregroundStyle(viewModel.repeatEnabled ? .primary : .secondary)
             }
 
             sliderView()
 
             HStack(spacing: 24) {
                 Button {
-                    viewModel.seek(to: -5)
+                    viewModel.previous()
                 } label: {
                     Image(systemName: "backward.end.alt.fill")
                         .resizable()
@@ -118,7 +116,7 @@ struct PlayerView: View {
                 }
 
                 Button {
-                    viewModel.seek(to: 5)
+                    viewModel.next()
                 } label: {
                     Image(systemName: "forward.end.alt.fill")
                         .resizable()
