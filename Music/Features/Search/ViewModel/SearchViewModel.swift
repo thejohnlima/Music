@@ -15,6 +15,8 @@ final class SearchViewModel: ObservableObject {
     @Published var searchText = ""
     @Published var showKeyboard = false
     @Published var selectedItem: SearchItem?
+    @Published var presentingAlbum: Int64?
+    @Published var presentingSheet: Media?
 
     private let network: SearchNetwork
 

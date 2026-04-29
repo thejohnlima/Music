@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct Media: Hashable {
+struct Media: Hashable, Identifiable {
+    let id = UUID()
     var trackId: Int?
     var albumId: Int64?
     var albumTitle: String?

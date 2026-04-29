@@ -8,6 +8,8 @@
 import Foundation
 
 struct SearchItem: Codable, Identifiable, Hashable {
+    private var wrapperType: String?
+
     var id = UUID()
     var trackId: Int?
     var artistName: String?
@@ -16,6 +18,10 @@ struct SearchItem: Codable, Identifiable, Hashable {
     var albumTitle: String?
     var artworkURL: String?
     var previewURL: String?
+
+    var type: WrapperType? {
+        WrapperType(rawValue: wrapperType ?? "")
+    }
 
     var toMedia: Media {
         Media(
@@ -30,11 +36,16 @@ struct SearchItem: Codable, Identifiable, Hashable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case trackId, artistName, trackName
+        case trackId, artistName, trackName, wrapperType
         case albumId = "collectionId"
         case albumTitle = "collectionName"
         case artworkURL = "artworkUrl100"
         case previewURL = "previewUrl"
+    }
+
+    enum WrapperType: String {
+        case track
+        case album = "collection"
     }
 
     func getImageURL(size: Int = 512) -> URL? {

@@ -29,6 +29,7 @@
 		1B9A64BE2F9D9FCF00DBC7A3 /* Exceptions for "MusicTests" folder in "Music" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Mock/JSON/album.json,
 				Mock/JSON/search_response.json,
 			);
 			target = 1B6B67512F999A8700AAF466 /* Music */;

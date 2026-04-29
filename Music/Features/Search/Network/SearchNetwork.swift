@@ -24,4 +24,21 @@ class SearchNetwork {
 
         return results
     }
+
+
+    /// Fetch album
+    /// - Parameter id: Album ID
+    /// - Returns: Returns the album and the list of tracks
+    func fetchAlbum(id: Int64) async -> [SearchItem] {
+        guard let url = URL(string: "https://itunes.apple.com/lookup?id=\(id)&entity=song") else { return [] }
+
+        let request = URLRequest(url: url)
+
+        guard let (data, _) = try? await URLSession.shared.data(for: request),
+              let response = try? JSONDecoder().decode(SearchResponse.self, from: data) else { return [] }
+
+        let results = response.results ?? []
+
+        return results
+    }
 }

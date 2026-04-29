@@ -11,46 +11,44 @@ import SwiftUI
 struct PlayerView: View {
 
     // MARK: - Properties
-    @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: PlayerViewModel
+    @StateObject var viewModel: PlayerViewModel
 
     var body: some View {
-        NavigationStack {
-            GeometryReader { geometry in
-                VStack(alignment: .center) {
-                    Spacer()
-                    imageView(geometry: geometry)
-                    Spacer()
-                    infoControlsView()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                .navigationTitle(viewModel.currentMedia?.albumTitle ?? "")
-                .toolbarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            if let id = viewModel.currentMedia?.albumId {
-                                viewModel.presentingAlbum = id
-                            }
-                        } label: {
-                            Label("More", systemImage: "ellipsis")
-                        }
-                    }
-
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button(role: .close) {
-                            dismiss()
-                        }
-                    }
-                }
+        GeometryReader { geometry in
+            VStack(alignment: .center) {
+                Spacer()
+                imageView(geometry: geometry)
+                Spacer()
+                infoControlsView()
             }
-            .navigationDestination(item: $viewModel.presentingAlbum) { _ in
-                AlbumView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .navigationTitle(viewModel.currentMedia?.albumTitle ?? "")
+            .toolbarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        if let media = viewModel.currentMedia {
+                            viewModel.presentingSheet = media
+                        }
+                    } label: {
+                        Label("More", systemImage: "ellipsis")
+                    }
+                }
             }
         }
-        .onAppear {
-            guard let media = viewModel.currentMedia else { return }
+        .task {
+            guard let media = viewModel.currentMedia, !viewModel.isPlaying else { return }
             viewModel.load(media)
+        }
+        .navigationDestination(item: $viewModel.presentingAlbum) { id in
+            AlbumView(viewModel: AlbumViewModel(albumId: id))
+        }
+        .sheet(item: $viewModel.presentingSheet) { media in
+            SongDetailsView(viewModel: .init(media: media)) {
+                viewModel.presentingAlbum = media.albumId
+            }
+            .presentationDetents([.height(256), .medium])
+            .presentationDragIndicator(.visible)
         }
     }
 

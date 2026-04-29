@@ -12,7 +12,6 @@ struct SearchView: View {
 
     // MARK: - Properties
     @Environment(\.dismissSearch) private var dismissSearch
-    @StateObject private var coordinator = SearchCoordinator()
     @StateObject var viewModel = SearchViewModel()
 
     var body: some View { 
@@ -39,10 +38,17 @@ struct SearchView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
+
+                    Spacer()
+
+                    Button {
+                        viewModel.presentingSheet = item.toMedia
+                    } label: {
+                        Text("\(Image(systemName: "ellipsis"))")
+                    }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
                 }
-                .badge(
-                    Text("\(Image(systemName: "ellipsis"))")
-                )
                 .listRowSeparator(.hidden)
                 .onTapGesture {
                     viewModel.selectedItem = item
@@ -63,14 +69,24 @@ struct SearchView: View {
                 }
                 dismissSearch()
             }
-            .fullScreenCover(item: $viewModel.selectedItem) { item in
+            .navigationDestination(item: $viewModel.selectedItem) { item in
                 PlayerView(
                     viewModel: .init(selected: item.toMedia, list: viewModel.items.mediaList)
                 )
             }
+            .navigationDestination(item: $viewModel.presentingAlbum) { id in
+                AlbumView(viewModel: AlbumViewModel(albumId: id))
+            }
+            .sheet(item: $viewModel.presentingSheet) { media in
+                SongDetailsView(viewModel: .init(media: media)) {
+                    viewModel.presentingAlbum = media.albumId
+                }
+                .presentationDetents([.height(256), .medium])
+                .presentationDragIndicator(.visible)
+            }
         }
         .task {
-            await viewModel.search(text: "piseiro")
+            await viewModel.search(text: "rain")
         }
     }
 

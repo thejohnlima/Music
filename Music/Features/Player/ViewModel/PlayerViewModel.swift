@@ -17,9 +17,10 @@ final class PlayerViewModel: ObservableObject {
     @Published var totalDuration: TimeInterval = 0
     @Published var isPlaying = false
     @Published var isSeeking = false
-    @Published var repeatEnabled = true
+    @Published var repeatEnabled = false
     @Published var dragProgress: Double = 0
     @Published var presentingAlbum: Int64?
+    @Published var presentingSheet: Media?
 
     private var player: AVPlayer?
     private var timeObserverToken: Any?
@@ -198,13 +199,15 @@ final class PlayerViewModel: ObservableObject {
         ) { [weak self] _ in
             guard let self else { return }
 
-            self.isPlaying = false
-            self.currentTime = 0
-            self.dragProgress = 0
-            self.player?.seek(to: .zero)
+            currentTime = 0
+            dragProgress = 0
+            player?.seek(to: .zero)
 
-            if repeatEnabled {
-                self.next()
+            if repeatEnabled || presentingAlbum != nil {
+                player?.play()
+            } else {
+                isPlaying = false
+                next()
             }
         }
     }
