@@ -7,8 +7,9 @@
 
 import Foundation
 
-struct Media {
-    var trackID: Int?
+struct Media: Hashable {
+    var trackId: Int?
+    var albumId: Int64?
     var albumTitle: String?
     var image: String?
     var artistName: String?

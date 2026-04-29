@@ -12,13 +12,15 @@ struct SearchItem: Codable, Identifiable, Hashable {
     var trackId: Int?
     var artistName: String?
     var trackName: String?
+    var albumId: Int64?
     var albumTitle: String?
     var artworkURL: String?
     var previewURL: String?
 
     var toMedia: Media {
         Media(
-            trackID: trackId,
+            trackId: trackId,
+            albumId: albumId,
             albumTitle: albumTitle,
             image: getImageURL()?.absoluteString,
             artistName: artistName,
@@ -29,6 +31,7 @@ struct SearchItem: Codable, Identifiable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case trackId, artistName, trackName
+        case albumId = "collectionId"
         case albumTitle = "collectionName"
         case artworkURL = "artworkUrl100"
         case previewURL = "previewUrl"

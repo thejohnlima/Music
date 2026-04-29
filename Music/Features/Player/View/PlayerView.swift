@@ -29,7 +29,9 @@ struct PlayerView: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
-
+                            if let id = viewModel.currentMedia?.albumId {
+                                viewModel.presentingAlbum = id
+                            }
                         } label: {
                             Label("More", systemImage: "ellipsis")
                         }
@@ -41,6 +43,9 @@ struct PlayerView: View {
                         }
                     }
                 }
+            }
+            .navigationDestination(item: $viewModel.presentingAlbum) { _ in
+                AlbumView()
             }
         }
         .onAppear {

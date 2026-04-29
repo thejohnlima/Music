@@ -19,6 +19,7 @@ final class PlayerViewModel: ObservableObject {
     @Published var isSeeking = false
     @Published var repeatEnabled = true
     @Published var dragProgress: Double = 0
+    @Published var presentingAlbum: Int64?
 
     private var player: AVPlayer?
     private var timeObserverToken: Any?
@@ -51,7 +52,7 @@ final class PlayerViewModel: ObservableObject {
     }
 
     private var nextIndex: Int {
-        guard let currentMedia, let index = mediaList.firstIndex(where: { $0.trackID == currentMedia.trackID }) else { return 0 }
+        guard let currentMedia, let index = mediaList.firstIndex(where: { $0.trackId == currentMedia.trackId }) else { return 0 }
 
         let next = mediaList.index(after: index)
 
@@ -59,7 +60,7 @@ final class PlayerViewModel: ObservableObject {
     }
 
     private var previousIndex: Int {
-        guard let currentMedia, let index = mediaList.firstIndex(where: { $0.trackID == currentMedia.trackID }) else { return 0 }
+        guard let currentMedia, let index = mediaList.firstIndex(where: { $0.trackId == currentMedia.trackId }) else { return 0 }
 
         let previous = mediaList.index(before: index)
         
